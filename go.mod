@@ -1,4 +1,4 @@
-module github.com/vincentmaurin/meta-ads-cli
+module github.com/the20100/meta-ads-cli
 
 go 1.22
 

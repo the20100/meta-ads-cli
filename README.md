@@ -14,7 +14,7 @@ A fast, zero-dependency CLI for the [Meta Marketing API](https://developers.face
 ### Build from source
 
 ```bash
-git clone https://github.com/vincentmaurin/meta-ads-cli
+git clone https://github.com/the20100/meta-ads-cli
 cd meta-ads-cli
 go build -o meta-ads .
 # optionally move to PATH

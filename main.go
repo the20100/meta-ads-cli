@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vincentmaurin/meta-ads-cli/cmd"
+	"github.com/the20100/meta-ads-cli/cmd"
 )
 
 func main() {

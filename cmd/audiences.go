@@ -6,8 +6,8 @@ import (
 	"net/url"
 
 	"github.com/spf13/cobra"
-	"github.com/vincentmaurin/meta-ads-cli/internal/api"
-	"github.com/vincentmaurin/meta-ads-cli/internal/output"
+	"github.com/the20100/meta-ads-cli/internal/api"
+	"github.com/the20100/meta-ads-cli/internal/output"
 )
 
 var audiencesCmd = &cobra.Command{
