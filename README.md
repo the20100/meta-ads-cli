@@ -210,6 +210,18 @@ meta-ads pixels list -a act_123456789
 
 ---
 
+### Update — Self-update
+
+Pull the latest source from GitHub, rebuild, and replace the current binary.
+
+```bash
+meta-ads update
+```
+
+Requires `git` and `go` to be installed.
+
+---
+
 ## JSON output & agent use
 
 All commands output JSON automatically when stdout is not a TTY (e.g. when piped):
