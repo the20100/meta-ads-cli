@@ -191,12 +191,29 @@ func maskOrEmpty(v string) string {
 	return v[:4] + "..." + v[len(v)-4:]
 }
 
+// resolveEnv returns the value of the first non-empty environment variable from the given names.
+func resolveEnv(names ...string) string {
+	for _, name := range names {
+		if v := os.Getenv(name); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 // resolveToken returns the best available token using the priority chain.
 // Returns (token, appSecret, error).
 func resolveToken() (string, string, error) {
-	// 1. META_TOKEN env var (universal override for all Meta CLIs)
-	if t := os.Getenv("META_TOKEN"); t != "" {
-		return t, os.Getenv("META_APP_SECRET"), nil
+	// 1. META_TOKEN env var (universal override for all Meta CLIs; try all aliases)
+	if t := resolveEnv(
+		"META_TOKEN", "META_ACCESS_TOKEN", "META_API_TOKEN", "META_BEARER_TOKEN",
+		"TOKEN_META", "META_KEY", "META_API_KEY", "META_API", "API_KEY_META", "API_META",
+	); t != "" {
+		appSecret := resolveEnv(
+			"META_APP_SECRET", "META_SECRET", "META_SECRET_KEY", "META_API_SECRET",
+			"META_APP_SECRET_KEY", "SECRET_META", "API_SECRET_META", "SK_META", "META_SK",
+		)
+		return t, appSecret, nil
 	}
 
 	// 2. Own config
@@ -208,7 +225,10 @@ func resolveToken() (string, string, error) {
 	if cfg.AccessToken != "" {
 		appSecret := cfg.AppSecret
 		if appSecret == "" {
-			appSecret = os.Getenv("META_APP_SECRET")
+			appSecret = resolveEnv(
+				"META_APP_SECRET", "META_SECRET", "META_SECRET_KEY", "META_API_SECRET",
+				"META_APP_SECRET_KEY", "SECRET_META", "API_SECRET_META", "SK_META", "META_SK",
+			)
 		}
 		return cfg.AccessToken, appSecret, nil
 	}
@@ -220,7 +240,11 @@ func resolveToken() (string, string, error) {
 	}
 	if sharedToken != "" {
 		warnSharedExpiry()
-		return sharedToken, os.Getenv("META_APP_SECRET"), nil
+		appSecret := resolveEnv(
+			"META_APP_SECRET", "META_SECRET", "META_SECRET_KEY", "META_API_SECRET",
+			"META_APP_SECRET_KEY", "SECRET_META", "API_SECRET_META", "SK_META", "META_SK",
+		)
+		return sharedToken, appSecret, nil
 	}
 
 	return "", "", fmt.Errorf("not authenticated — run: meta-ads auth login\nor: meta-auth login  (shared auth)")
@@ -253,12 +277,14 @@ func isAuthCommand(cmd *cobra.Command) bool {
 }
 
 // resolveAccount returns the account ID to use for a command.
-// Priority: --account flag > META_ADS_ACCOUNT env var > config default account.
+// Priority: --account flag > META_ADS_ACCOUNT env var (+ aliases) > config default account.
 func resolveAccount() (string, error) {
 	if accountFlag != "" {
 		return api.NormalizeAccountID(accountFlag), nil
 	}
-	if env := os.Getenv("META_ADS_ACCOUNT"); env != "" {
+	if env := resolveEnv(
+		"META_ADS_ACCOUNT", "META_ACCOUNT", "META_AD_ACCOUNT", "FACEBOOK_AD_ACCOUNT",
+	); env != "" {
 		return api.NormalizeAccountID(env), nil
 	}
 	if cfg != nil && cfg.DefaultAccount != "" {
