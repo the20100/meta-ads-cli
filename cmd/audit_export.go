@@ -142,6 +142,7 @@ type auditMetrics struct {
 	CTR               string `json:"ctr"`
 	VideoViews3s      string `json:"video_views_3s"`
 	VideoViews15s     string `json:"video_views_15s"`
+	ThruPlay          string `json:"thruplay"`
 	HookRatio         string `json:"hook_ratio"`
 	HoldRate          string `json:"hold_rate"`
 	AddToCart         string `json:"add_to_cart"`
@@ -164,7 +165,11 @@ type actionEntry struct {
 
 // ── Insight fields requested from Meta API ───────────────────────────────────
 
-const auditInsightFields = "spend,impressions,reach,cpm,frequency,inline_link_clicks,inline_link_click_ctr,video_3_sec_watched_actions,video_thruplay_watched_actions,actions,action_values,cost_per_action_type,purchase_roas"
+// video_3_sec_watched_actions does NOT exist in the API — 3s views come from
+// the "video_view" action_type inside the "actions" array.
+// video_15_sec_watched_actions is the closest named field; ThruPlay (≥15s or
+// complete) is video_thruplay_watched_actions.
+const auditInsightFields = "spend,impressions,reach,cpm,frequency,inline_link_clicks,inline_link_click_ctr,video_15_sec_watched_actions,video_thruplay_watched_actions,actions,action_values,cost_per_action_type,purchase_roas"
 
 // ── Main runner ──────────────────────────────────────────────────────────────
 
@@ -483,11 +488,15 @@ func buildMetrics(m map[string]json.RawMessage) *auditMetrics {
 	ctr := jsonString(m["inline_link_click_ctr"])
 
 	// Video views
-	video3s := sumActionEntries(m["video_3_sec_watched_actions"])
+	// 3-second video views = "video_view" action_type inside the "actions" array
+	// 15-second views = video_15_sec_watched_actions (dedicated field)
+	// ThruPlay (≥15s or complete) = video_thruplay_watched_actions (dedicated field)
+	video15s := sumActionEntries(m["video_15_sec_watched_actions"])
 	thruplay := sumActionEntries(m["video_thruplay_watched_actions"])
 
 	// Actions
 	actions := parseActionEntries(m["actions"])
+	video3s := findAction(actions, "video_view")
 	addToCart := findAction(actions, "add_to_cart", "offsite_conversion.fb_pixel_add_to_cart")
 	purchases := findAction(actions, "purchase", "offsite_conversion.fb_pixel_purchase")
 	leads := findAction(actions, "lead", "offsite_conversion.fb_pixel_lead")
@@ -524,7 +533,8 @@ func buildMetrics(m map[string]json.RawMessage) *auditMetrics {
 		LinkClicks:       linkClicks,
 		CTR:              ctr,
 		VideoViews3s:     video3s,
-		VideoViews15s:    thruplay,
+		VideoViews15s:    video15s,
+		ThruPlay:         thruplay,
 		HookRatio:        computeRatio(video3s, impressions),
 		HoldRate:         computeRatio(thruplay, video3s),
 		AddToCart:        addToCart,
@@ -669,7 +679,7 @@ func writeAuditCSV(w *os.File, report auditReport) error {
 		"Ad ID", "Ad Name", "Ad Status",
 		"Spend", "Impressions", "Reach", "CPM", "Frequency",
 		"Link Clicks", "CTR",
-		"Video Views 3s", "Video Views 15s", "Hook Ratio", "Hold Rate",
+		"Video Views 3s", "Video Views 15s", "ThruPlay", "Hook Ratio", "Hold Rate",
 		"Add to Cart", "Cost per Add to Cart",
 		"Purchases", "Cost per Purchase", "Purchase Value", "ROAS", "Conversion Rate",
 		"Engagement Rate",
@@ -722,7 +732,7 @@ func buildCSVRow(c auditCampaign, as auditAdSet, ad auditAd, metrics *auditMetri
 		ad.ID, ad.Name, ad.EffectiveStatus,
 		m.Spend, m.Impressions, m.Reach, m.CPM, m.Frequency,
 		m.LinkClicks, m.CTR,
-		m.VideoViews3s, m.VideoViews15s, m.HookRatio, m.HoldRate,
+		m.VideoViews3s, m.VideoViews15s, m.ThruPlay, m.HookRatio, m.HoldRate,
 		m.AddToCart, m.CostPerAddToCart,
 		m.Purchases, m.CostPerPurchase, m.PurchaseValue, m.ROAS, m.ConversionRate,
 		m.EngagementRate,
@@ -817,6 +827,7 @@ func writeMetricsTable(w *os.File, m *auditMetrics) {
 	fmt.Fprintf(w, "| CTR | %s |\n", m.CTR)
 	fmt.Fprintf(w, "| Video Views 3s | %s |\n", m.VideoViews3s)
 	fmt.Fprintf(w, "| Video Views 15s | %s |\n", m.VideoViews15s)
+	fmt.Fprintf(w, "| ThruPlay | %s |\n", m.ThruPlay)
 	fmt.Fprintf(w, "| Hook Ratio | %s |\n", m.HookRatio)
 	fmt.Fprintf(w, "| Hold Rate | %s |\n", m.HoldRate)
 	fmt.Fprintf(w, "| Add to Cart | %s |\n", m.AddToCart)
