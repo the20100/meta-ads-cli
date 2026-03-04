@@ -117,9 +117,9 @@ func runAudiencesGet(cmd *cobra.Command, args []string) error {
 		{"Size (Lower)", formatCount(a.ApproximateCountLowerBound)},
 		{"Size (Upper)", formatCount(a.ApproximateCountUpperBound)},
 		{"Delivery Status", deliveryStatus},
-		{"Created", output.FormatTime(a.TimeCreated)},
-		{"Updated", output.FormatTime(a.TimeUpdated)},
-		{"Content Updated", output.FormatTime(a.TimeContentUpdated)},
+		{"Created", output.FormatTime(a.TimeCreated.String())},
+		{"Updated", output.FormatTime(a.TimeUpdated.String())},
+		{"Content Updated", output.FormatTime(a.TimeContentUpdated.String())},
 	}
 	output.PrintKeyValue(rows)
 

@@ -170,13 +170,13 @@ type Audience struct {
 		Description string `json:"description"`
 	} `json:"delivery_status,omitempty"`
 	Description        string          `json:"description,omitempty"`
-	TimeContentUpdated string          `json:"time_content_updated,omitempty"`
+	TimeContentUpdated FlexString      `json:"time_content_updated,omitempty"`
 	Rule               json.RawMessage `json:"rule,omitempty"`
 	RuleAggregation    json.RawMessage `json:"rule_aggregation,omitempty"`
 	RetentionDays      int             `json:"retention_days,omitempty"`
 	PixelID            string          `json:"pixel_id,omitempty"`
-	TimeCreated        string          `json:"time_created,omitempty"`
-	TimeUpdated        string          `json:"time_updated,omitempty"`
+	TimeCreated        FlexString      `json:"time_created,omitempty"`
+	TimeUpdated        FlexString      `json:"time_updated,omitempty"`
 }
 
 // Pixel represents a Meta pixel.
