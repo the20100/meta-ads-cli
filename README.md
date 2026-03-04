@@ -132,11 +132,17 @@ meta-ads adsets list -a act_123456789
 meta-ads adsets list -a act_123456789 --campaign <campaign_id>
 meta-ads adsets list -a act_123456789 --status ACTIVE
 
+# Filter by name (case-insensitive)
+meta-ads adsets list -a act_123456789 --name-contains "Ultra Broad"
+
 # Get full details (targeting, audiences, campaign info, attribution)
 meta-ads adsets get <adset_id>
 
 # Get full details as JSON (includes raw targeting & promoted_object)
 meta-ads adsets get <adset_id> --json
+
+# Get with custom fields
+meta-ads adsets get <adset_id> --fields id,name,targeting,promoted_object
 
 # Pause
 meta-ads adsets pause <adset_id>
@@ -214,6 +220,9 @@ meta-ads audiences get <audience_id>
 
 # Get full details as JSON (includes raw rule JSON)
 meta-ads audiences get <audience_id> --json
+
+# Get with custom fields
+meta-ads audiences get <audience_id> --fields id,name,rule,retention_days,pixel_id
 ```
 
 The `audiences get` command returns full construction details including:

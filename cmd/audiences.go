@@ -11,6 +11,8 @@ import (
 	"github.com/the20100/meta-ads-cli/internal/output"
 )
 
+var audienceGetFields string
+
 var audiencesCmd = &cobra.Command{
 	Use:   "audiences",
 	Short: "Manage Meta custom audiences",
@@ -30,6 +32,8 @@ var audiencesGetCmd = &cobra.Command{
 }
 
 func init() {
+	audiencesGetCmd.Flags().StringVar(&audienceGetFields, "fields", "", "Comma-separated fields to request from the API (overrides defaults)")
+
 	audiencesCmd.AddCommand(audiencesListCmd, audiencesGetCmd)
 	rootCmd.AddCommand(audiencesCmd)
 }
@@ -85,6 +89,9 @@ func runAudiencesList(cmd *cobra.Command, args []string) error {
 func runAudiencesGet(cmd *cobra.Command, args []string) error {
 	id := args[0]
 	fields := "id,name,description,subtype,rule,rule_aggregation,retention_days,pixel_id,approximate_count_lower_bound,approximate_count_upper_bound,delivery_status,time_created,time_updated,time_content_updated"
+	if audienceGetFields != "" {
+		fields = audienceGetFields
+	}
 	params := url.Values{}
 	params.Set("fields", fields)
 

@@ -12,8 +12,10 @@ import (
 )
 
 var (
-	adsetCampaignFilter string
-	adsetStatusFilter   string
+	adsetCampaignFilter    string
+	adsetStatusFilter      string
+	adsetNameContains      string
+	adsetGetFields         string
 
 	adsetUpdateDailyBudget    string
 	adsetUpdateLifetimeBudget string
@@ -54,6 +56,9 @@ var adsetsUpdateBudgetCmd = &cobra.Command{
 func init() {
 	adsetsListCmd.Flags().StringVar(&adsetCampaignFilter, "campaign", "", "Filter by campaign ID")
 	adsetsListCmd.Flags().StringVar(&adsetStatusFilter, "status", "", "Filter by status (ACTIVE, PAUSED, etc.)")
+	adsetsListCmd.Flags().StringVar(&adsetNameContains, "name-contains", "", "Filter ad sets whose name contains this string (case-insensitive)")
+
+	adsetsGetCmd.Flags().StringVar(&adsetGetFields, "fields", "", "Comma-separated fields to request from the API (overrides defaults)")
 
 	adsetsUpdateBudgetCmd.Flags().StringVar(&adsetUpdateDailyBudget, "daily-budget", "", "New daily budget in cents (e.g. 5000 = $50.00)")
 	adsetsUpdateBudgetCmd.Flags().StringVar(&adsetUpdateLifetimeBudget, "lifetime-budget", "", "New lifetime budget in cents")
@@ -84,10 +89,14 @@ func runAdsetsList(cmd *cobra.Command, args []string) error {
 	}
 
 	adsets := make([]api.AdSet, 0, len(items))
+	nameFilter := strings.ToLower(adsetNameContains)
 	for _, raw := range items {
 		var a api.AdSet
 		if err := json.Unmarshal(raw, &a); err != nil {
 			return fmt.Errorf("parsing adset: %w", err)
+		}
+		if nameFilter != "" && !strings.Contains(strings.ToLower(a.Name), nameFilter) {
+			continue
 		}
 		adsets = append(adsets, a)
 	}
@@ -116,6 +125,9 @@ func runAdsetsList(cmd *cobra.Command, args []string) error {
 func runAdsetsGet(cmd *cobra.Command, args []string) error {
 	id := args[0]
 	fields := "id,name,status,effective_status,campaign_id,daily_budget,lifetime_budget,budget_remaining,bid_amount,bid_strategy,billing_event,optimization_goal,start_time,end_time,created_time,updated_time,destination_type,campaign{id,name,objective},targeting,promoted_object,attribution_spec,pacing_type"
+	if adsetGetFields != "" {
+		fields = adsetGetFields
+	}
 	params := url.Values{}
 	params.Set("fields", fields)
 
