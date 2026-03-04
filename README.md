@@ -132,8 +132,11 @@ meta-ads adsets list -a act_123456789
 meta-ads adsets list -a act_123456789 --campaign <campaign_id>
 meta-ads adsets list -a act_123456789 --status ACTIVE
 
-# Get details
+# Get full details (targeting, audiences, campaign info, attribution)
 meta-ads adsets get <adset_id>
+
+# Get full details as JSON (includes raw targeting & promoted_object)
+meta-ads adsets get <adset_id> --json
 
 # Pause
 meta-ads adsets pause <adset_id>
@@ -142,6 +145,12 @@ meta-ads adsets pause <adset_id>
 meta-ads adsets update-budget <adset_id> --daily-budget 2000
 meta-ads adsets update-budget <adset_id> --lifetime-budget 50000
 ```
+
+The `adsets get` command returns full configuration including:
+- Campaign name & objective (nested)
+- Bid strategy, billing event, optimization goal
+- **Targeting**: age, gender, geo, platforms, positions, included/excluded custom audiences
+- Promoted object, attribution spec, pacing type
 
 ---
 
@@ -197,8 +206,20 @@ meta-ads insights get -a act_123456789 \
 ### Audiences
 
 ```bash
+# List custom audiences
 meta-ads audiences list -a act_123456789
+
+# Get full audience details (construction rules, retention, pixel source)
+meta-ads audiences get <audience_id>
+
+# Get full details as JSON (includes raw rule JSON)
+meta-ads audiences get <audience_id> --json
 ```
+
+The `audiences get` command returns full construction details including:
+- Subtype, pixel ID, retention days
+- **Construction rules**: event sources (pixel, IG, FB page), events (Purchase, AddToCart, etc.), filters, retention periods
+- Approximate audience size, delivery status
 
 ---
 

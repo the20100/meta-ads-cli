@@ -1,6 +1,40 @@
 package api
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
+
+// FlexString handles Meta API fields that are inconsistently returned as
+// either a JSON string ("1500") or a JSON number (1500).
+// This fixes parsing errors like: cannot unmarshal number into Go struct field ... of type string
+type FlexString string
+
+func (f *FlexString) UnmarshalJSON(data []byte) error {
+	// Try string first
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*f = FlexString(s)
+		return nil
+	}
+	// Try number (int or float)
+	var n float64
+	if err := json.Unmarshal(data, &n); err == nil {
+		if n == float64(int64(n)) {
+			*f = FlexString(fmt.Sprintf("%d", int64(n)))
+		} else {
+			*f = FlexString(fmt.Sprintf("%g", n))
+		}
+		return nil
+	}
+	// null
+	*f = ""
+	return nil
+}
+
+func (f FlexString) String() string {
+	return string(f)
+}
 
 // MetaError wraps a Meta API error response.
 type MetaError struct {
@@ -77,21 +111,34 @@ type Campaign struct {
 
 // AdSet represents a Meta ad set.
 type AdSet struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	Status          string `json:"status"`
-	EffectiveStatus string `json:"effective_status,omitempty"`
-	CampaignID      string `json:"campaign_id"`
-	DailyBudget     string `json:"daily_budget,omitempty"`
-	LifetimeBudget  string `json:"lifetime_budget,omitempty"`
-	BudgetRemaining string `json:"budget_remaining,omitempty"`
-	BidAmount       string `json:"bid_amount,omitempty"`
-	BillingEvent    string `json:"billing_event,omitempty"`
-	OptimizationGoal string `json:"optimization_goal,omitempty"`
-	StartTime       string `json:"start_time,omitempty"`
-	EndTime         string `json:"end_time,omitempty"`
-	CreatedTime     string `json:"created_time,omitempty"`
-	UpdatedTime     string `json:"updated_time,omitempty"`
+	ID              string     `json:"id"`
+	Name            string     `json:"name"`
+	Status          string     `json:"status"`
+	EffectiveStatus string     `json:"effective_status,omitempty"`
+	CampaignID      string     `json:"campaign_id"`
+	DailyBudget     FlexString `json:"daily_budget,omitempty"`
+	LifetimeBudget  FlexString `json:"lifetime_budget,omitempty"`
+	BudgetRemaining FlexString `json:"budget_remaining,omitempty"`
+	BidAmount       FlexString `json:"bid_amount,omitempty"`
+	BidStrategy     string     `json:"bid_strategy,omitempty"`
+	BillingEvent    string     `json:"billing_event,omitempty"`
+	OptimizationGoal string    `json:"optimization_goal,omitempty"`
+	StartTime       string     `json:"start_time,omitempty"`
+	EndTime         string     `json:"end_time,omitempty"`
+	CreatedTime     string     `json:"created_time,omitempty"`
+	UpdatedTime     string     `json:"updated_time,omitempty"`
+	DestinationType string     `json:"destination_type,omitempty"`
+	// Nested campaign info (returned when requesting campaign{id,name,objective})
+	Campaign *struct {
+		ID        string `json:"id"`
+		Name      string `json:"name"`
+		Objective string `json:"objective"`
+	} `json:"campaign,omitempty"`
+	// Complex fields returned as raw JSON for flexible display
+	Targeting      json.RawMessage `json:"targeting,omitempty"`
+	PromotedObject json.RawMessage `json:"promoted_object,omitempty"`
+	AttributionSpec json.RawMessage `json:"attribution_spec,omitempty"`
+	PacingType     json.RawMessage `json:"pacing_type,omitempty"`
 }
 
 // Ad represents a Meta ad.
@@ -122,8 +169,14 @@ type Audience struct {
 		Code        int    `json:"code"`
 		Description string `json:"description"`
 	} `json:"delivery_status,omitempty"`
-	Description       string `json:"description,omitempty"`
-	TimeContentUpdated string `json:"time_content_updated,omitempty"`
+	Description        string          `json:"description,omitempty"`
+	TimeContentUpdated string          `json:"time_content_updated,omitempty"`
+	Rule               json.RawMessage `json:"rule,omitempty"`
+	RuleAggregation    json.RawMessage `json:"rule_aggregation,omitempty"`
+	RetentionDays      int             `json:"retention_days,omitempty"`
+	PixelID            string          `json:"pixel_id,omitempty"`
+	TimeCreated        string          `json:"time_created,omitempty"`
+	TimeUpdated        string          `json:"time_updated,omitempty"`
 }
 
 // Pixel represents a Meta pixel.
