@@ -6,6 +6,7 @@ A fast, zero-dependency CLI for the [Meta Marketing API](https://developers.face
 - **Single static binary** — no runtime, no dependencies to install
 - **Two auth modes** — browser OAuth or paste a token directly
 - **Full read + write** — list, get, create, pause, update campaigns / ad sets / ads
+- **Audit export** — full account audit with config + metrics in JSON, CSV, or Markdown
 
 ---
 
@@ -237,6 +238,49 @@ The `audiences get` command returns full construction details including:
 ```bash
 meta-ads pixels list -a act_123456789
 ```
+
+---
+
+### Audit Export
+
+Export a complete account audit — all campaigns, ad sets, and ads with their configuration and performance metrics in a single structured document.
+
+```bash
+# Default: last 3 months, only active items, JSON to stdout
+meta-ads audit-export -a act_123456789
+
+# Last 30 days, save to file
+meta-ads audit-export -a act_123456789 --period 30d -o audit.json
+
+# Custom date range
+meta-ads audit-export -a act_123456789 --start 2026-01-01 --end 2026-02-01
+
+# CSV format (one row per ad, flattened)
+meta-ads audit-export -a act_123456789 --format csv -o audit.csv
+
+# Markdown report
+meta-ads audit-export -a act_123456789 --format md -o report.md
+
+# Include everything (even items with zero impressions)
+meta-ads audit-export -a act_123456789 --all
+```
+
+| Flag | Description |
+|------|-------------|
+| `--period <period>` | Time period: `7d`, `30d`, `3m` (default), `6m`, `1y` |
+| `--start <YYYY-MM-DD>` | Custom start date (overrides `--period`) |
+| `--end <YYYY-MM-DD>` | Custom end date (overrides `--period`) |
+| `--all` | Include all items, even with zero impressions |
+| `--format <format>` | Output format: `json` (default), `csv`, `md` |
+| `-o, --output <path>` | Write to file instead of stdout |
+
+**What's included:**
+
+- **Campaigns** — config (objective, budget, bid strategy) + metrics
+- **Ad Sets** — config (budget, billing, optimization goal) + full targeting (age, gender, geo, platforms, audiences) + metrics
+- **Ads** — creative details (primary text, headline, CTA, link URL, image/video URL) + metrics
+
+**Metrics at each level:** Spend · Impressions · Reach · CPM · Frequency · Link Clicks · CTR · Video Views 3s · Video Views 15s (ThruPlay) · Hook Ratio · Hold Rate · Add to Cart · Cost/ATC · Purchases · Cost/Purchase · Purchase Value · ROAS · Conversion Rate · Engagement Rate · Leads · Cost/Lead
 
 ---
 
